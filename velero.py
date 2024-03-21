@@ -4,10 +4,10 @@ Required below velero version installed on deploy runner.
 Client:
     Version: v1.4.2
 
-Wrapper commands around velero that does things like.
+Wrapper commands around velero that do things like.
 
 - Installing velero on to the targeted cluster
-- Perform backups, restore and backup creation.
+- Perform backups, restore, and backup creation.
 - Setting S3 Policies for backup buckets that are created.
 
 """
@@ -30,14 +30,14 @@ class VeleroCommand:
     """Base class for running Velero commands."""
 
     def __init__(self, args):
-        """Initializing class for the VeleroCommands."""
+        """ Initializing class for the VeleroCommands."""
         self.log = logging.getLogger(os.path.basename(__file__))
         self.profile = args.profile
         self.log.info("Setting AWS profile to {}".format(self.profile))
         self.session = boto3.session.Session(profile_name=self.profile)
 
     def _check_roles(self):
-        """Check if the velero role exits in the IAM user list."""
+        """ Check if the velero role exits in the IAM user list."""
         iam = self.session.client("iam")
         users = []
         for user in iam.list_users()["Users"]:
@@ -51,7 +51,7 @@ class VeleroCommand:
 
 
 class DescribeCommand:
-    """Wrapper around `velero describe`."""
+    """ Wrapper around `velero describe`. """
 
     def __init__(self, args):
         """Command that describes the existing backup on the cluster.
@@ -66,7 +66,7 @@ class DescribeCommand:
         self._construct_command()
 
     def __call__(self):
-        """Run `velero describe` checks for existing bucket."""
+        """ Run `velero describe` checks for the existing bucket."""
         self.log.info("Running describe command: %s", " ".join(self.command))
         try:
             run(self.command, check=True)
@@ -74,7 +74,7 @@ class DescribeCommand:
             self.log.error("Cannot fetch {} {} \n {}".format(self.backup_name, self.state, e))
 
     def _construct_command(self):
-        """Construct `velero describe` command, save as self.command."""
+        """ Construct `velero describe` command, save as self.command."""
         command = [
             "velero",
             "{}".format(self.state),
@@ -87,7 +87,7 @@ class DescribeCommand:
 
 
 class BackupCommand:
-    """Wrapper around `velero backup`."""
+    """ Wrapper around `velero backup`. """
 
     def __init__(self, args):
         """Command that perform backup on the cluster.
@@ -124,10 +124,10 @@ class BackupCommand:
 
 
 class ScheduleCommand:
-    """Warpper around `velero schedule create @value --ttl @value`."""
+    """ Warpper around `velero schedule create @value --ttl @value`."""
 
     def __init__(self, args):
-        """Command that schedule backups based on cron provided."""
+        """ Command that schedule backups based on cron provided."""
         """Args:
             args (argparse.Namespace): Args returned by ArgumentParser.parse_args().
         """
@@ -139,7 +139,7 @@ class ScheduleCommand:
         self._construct_command()
 
     def __call__(self):
-        """Run `velero schedule` to perform scheduled backups."""
+        """ Run `velero schedule` to perform scheduled backups."""
         self.log.info("Running schedule command: %s", " ".join(self.command))
         try:
             run(" ".join(self.command), check=True, shell=True)
@@ -149,7 +149,7 @@ class ScheduleCommand:
             )
 
     def _construct_command(self):
-        """Construct `velero schedule` command, save as self.command."""
+        """ Construct `velero schedule` command, save as self.command."""
         command = [
             "velero",
             "create",
@@ -164,7 +164,7 @@ class ScheduleCommand:
 
 
 class RestoreCommand:
-    """Wrapper around `velero restore`."""
+    """ Wrapper around `velero restore`. """
 
     def __init__(self, args):
         """Command that restores from the existing backup on the cluster.
@@ -178,7 +178,7 @@ class RestoreCommand:
         self._construct_command()
 
     def __call__(self):
-        """Run `velero restore` checks for existing bucket."""
+        """Run `velero restore` checks for the existing bucket."""
         self.log.info("Running restore command: %s", " ".join(self.command))
         try:
             run(" ".join(self.command), check=True, shell=True)
@@ -186,7 +186,7 @@ class RestoreCommand:
             self.log.error("Restore cannot be performed from {} \n {}".format(self.backup_name, e))
 
     def _construct_command(self):
-        """Construct `velero restore` command, save as self.command."""
+        """ Construct `velero restore` command, save as self.command."""
         command = [
             "velero",
             "restore",
@@ -199,7 +199,7 @@ class RestoreCommand:
 
 
 class InstallCommand(VeleroCommand):
-    """Wrapper around `velero install`."""
+    """ Wrapper around `velero install`. """
 
     def __init__(self, args):
         """Command to install and setup velero on the cluster.
@@ -216,7 +216,7 @@ class InstallCommand(VeleroCommand):
         self._construct_command()
 
     def __call__(self):
-        """Run `velero install` checks for existing bucket."""
+        """ Run `velero install` checks for the existing bucket."""
         if self.create_bucket:
             self.create_backup_bucket()
             self.assign_bucket_policy()
@@ -226,7 +226,7 @@ class InstallCommand(VeleroCommand):
         run([" ".join(self.command)], shell=True)
 
     def _construct_command(self):
-        """Construct `velero install` command, save as self.command."""
+        """ Construct `velero install` command, save as self.command."""
         command = [
             "velero",
             "install",
@@ -241,7 +241,7 @@ class InstallCommand(VeleroCommand):
         self.command = command
 
     def create_backup_bucket(self):
-        """Create a new backup bucket during fresh setup of velero."""
+        """ Create a new backup bucket during fresh setup of velero."""
         s3 = self.session.resource("s3")
         if s3.Bucket("{}".format(self.bucket)) in s3.buckets.all():
             self.log.error(
@@ -266,7 +266,7 @@ class InstallCommand(VeleroCommand):
                 sys.exit(1)
 
     def assign_bucket_policy(self):
-        """Method assigns velero s3 policy for bucket."""
+        """ Method assigns velero s3 policy for the bucket."""
         self.log.info("Assigning velero user policy to {}".format(self.bucket))
         velero_bucket_policy = {
             "Version": "2012-10-17",
@@ -313,7 +313,7 @@ class InstallCommand(VeleroCommand):
             sys.exit(0)
 
     def _check_bucket_exists(self):
-        """Exit with error if the s3 backup dont exist."""
+        """ Exit with error if the s3 backup dont exist."""
         s3 = self.session.resource("s3")
         self.log.info("Checking if {} bucket exists".format(self.bucket))
         if not s3.Bucket("{}".format(self.bucket)) in s3.buckets.all():
@@ -324,10 +324,10 @@ class InstallCommand(VeleroCommand):
 
 
 class CommandLine:
-    """Class to implement the command line interface, like argument parsing."""
+    """ Class to implement the command line interface, like argument parsing."""
 
     def __init__(self):
-        """Initialize the CLI, parse args, and config logging."""
+        """ Initialize the CLI, parse args, and config logging."""
         self._parse_args()
         logging.basicConfig(level=getattr(logging, self.args.log_level.upper(), None))
         self.log = logging.getLogger(os.path.basename(__file__))
@@ -384,13 +384,13 @@ class CommandLine:
             sys.exit(3)
 
     def _required_version(self):
-        """Print the required version and found version of Velero, and exit."""
+        """ Print the required version and find a version of Velero, and exit."""
         print("Required Velero version:", REQUIRED_VELERO_VERSION)
         print("Velero version found:", self._velero_version())
         sys.exit(0)
 
     def _parse_args(self):
-        """Parse command line args and set self.args."""
+        """ Parse command line args and set self.args."""
         parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
         parser.add_argument(
             "--log-level",
@@ -402,7 +402,7 @@ class CommandLine:
         parser.add_argument(
             "--profile",
             dest="profile",
-            choices=set(["cv2", "default", "sdwan"]),
+            choices=set(["default"]),
             default="default",
             help="AWS profile name. Else default profile will be considered.",
         )
